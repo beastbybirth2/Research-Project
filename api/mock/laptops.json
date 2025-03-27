@@ -1,0 +1,44 @@
+{
+    "laptops": [
+        {
+            "_id": 1,
+            "name": "ThinkBook 14 Gen 2",
+            "instock": true,
+            "description": "11th Generation Intel® Core™ i5-1135G7 Processor (2.40 GHz up to 4.20 GHz)",
+            "image": "https://www.lenovo.com/medias/ThinkBook-14-Gen-2-Intel-hero.png?context=bWFzdGVyfHJvb3R8NjYwMDh8aW1hZ2UvcG5nfGg2NC9oZjYvMTMwMzMyMzY0NjM2NDYucG5nfDdlZWU5OGJlYzllYWI0OTM2NDcyMjMwYzA4ZmY3OWRjZDFkNTI4NjgxNWJhOGRmNmZlYTE3OWUzODhmOWQyZjM",
+            "price": "700"
+        },
+        {
+            "_id": 2,
+            "name": "Galaxy Book3 360",
+            "instock": false,
+            "description": "40.62cm (16) AMOLED display, CPU / Memory (LPDDR5)",
+            "image": "https://images.samsung.com/is/image/samsung/p6pim/in/2302/gallery/in-galaxy-book3-pro-14-inch-np940-447639-np940xfg-kc5in-thumb-534938460?imwidth=480",
+            "price": "1000"
+        },
+        {
+            "_id": 3,
+            "name": "Asus Predator",
+            "instock": true,
+            "description": "11Th Gen Intel Core I9/17.3 Inches 4K Uhd Display/64Gb Ddr4 Ram/2Tb Ssd/1Tb HDD/RTX 3080 Graphics/Windows 10 Home/Per Key RGB Backlit Keyboard",
+            "image": "https://m.media-amazon.com/images/W/IMAGERENDERING_521856-T1/images/I/81oz+NZ4QLL._SX450_.jpg",
+            "price": "1100"
+        },
+        {
+            "_id": 4,
+            "name": "MSI Pulse",
+            "instock": false,
+            "description": "Intel 12th Gen. i9-12900H, 40CM QHD 165Hz Gaming Laptop/Windows 11 Home/NVIDIA RTX 3060, 12UEK-898IN",
+            "image": "https://m.media-amazon.com/images/I/31mzR2UydbL._SY300_SX300_.jpg",
+            "price": "1000"
+        },
+        {
+            "_id": 5,
+            "name": "APPLE 2020 Macbook Air M1",
+            "instock": true,
+            "description": "8 GB/256 GB SSD/Mac OS Big Sur",
+            "image": "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/macbook-air-midnight-select-20220606?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1653084303665",
+             "price": "800"
+        }
+    ]
+}

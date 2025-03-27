@@ -1,0 +1,28 @@
+{
+    "thermostats": [
+        {
+            "_id": 0,
+            "name": "Living Room",
+            "temperature": "21",
+            "status": true
+        },
+        {
+            "_id": 2,
+            "name": "Bed room",
+            "temperature": "26",
+            "status": true
+        },
+        {
+            "_id": 3,
+            "name": "Kitchen",
+            "temperature": "42",
+            "status": true
+        },
+        {
+            "_id": 4,
+            "name": "Store room",
+            "temperature": "15",
+            "status": true
+        }
+    ]
+}

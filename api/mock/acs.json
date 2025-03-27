@@ -1,0 +1,32 @@
+{
+    "acs": [
+        {
+            "_id": 0,
+            "name": "Living Room",
+            "status": "on",
+            "temp": "19",
+            "fan": "LOW"
+        },
+        {
+            "_id": 1,
+            "name": "Bedroom",
+            "status": "off",
+            "temp": "16",
+            "fan": "LOW"
+        },
+        {
+            "_id": 2,
+            "name": "Workshop",
+            "status": "on",
+            "temp": "22",
+            "fan": "HIGH"
+        },
+        {
+            "_id": 3,
+            "name": "Office",
+            "status": "on",
+            "temp": "23",
+            "fan": "MEDIUM"
+        }
+    ]
+}

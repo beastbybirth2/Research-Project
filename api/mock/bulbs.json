@@ -1,0 +1,29 @@
+{
+    "lights": [
+        {
+            "_id": 0,
+            "name": "Philips",
+            "status": true
+        },
+        {
+            "_id": 1,
+            "name": "Syska",
+            "status": false
+        },
+        {
+            "_id": 2,
+            "name": "Actuary",
+            "status": true
+        },
+        {
+            "_id": 3,
+            "name": "Philips",
+            "status": false
+        },
+        {
+            "_id": 4,
+            "name": "Careta",
+            "status": true
+        }
+    ]
+}
