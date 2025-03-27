@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+    <!-- to fix favicon error -->
+    <link rel="shortcut icon" href="#">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Add Device</title>
+        <script src="https://code.jquery.com/jquery-3.6.3.min.js"
+            integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
+            crossorigin="anonymous"></script>
+            <link rel="icon" type="image/x-icon" href="./resources/images/favicon.ico">
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+            crossorigin="anonymous">
+        <style>
+                .icon {
+                  font-size: 3em;
+                  margin-right: 0.5em;
+                }
+                .btn-group-toggle > .btn input[type="radio"] {
+                  position: absolute;
+                  clip: rect(0,0,0,0);
+                  pointer-events: none;
+                }
+                .btn-group-toggle > .btn {
+                  margin-right: 5px;
+                }
+              
+                .btn-group-toggle > .btn.active label {
+                  background-color: #007bff;
+                  color: white;
+                }
+                .btn-group-toggle > .btn label {
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 70px;
+                  height: 70px;
+                  border: 2px solid #007bff;
+                  border-radius: 50%;
+                  font-size: 1.5em;
+                }
+                /* Add animation */
+    .form-container {
+      animation: slide-in 0.5s ease-out forwards;
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    .hidden {
+        display: none;
+    }
+    @keyframes slide-in {
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+              </style>
+    </head>
+    <body data-bs-theme="dark">
+
+        <div id="navbar"></div>
+        <div class="container">
+            <h1>Add a device</h1>
+            <div class="form-container">
+                <form id="device-form">
+                    <div class="form-group">
+                        <label for="device-type">Device Type:</label>
+                        <div class="btn-group btn-group-toggle"
+                            data-toggle="buttons">
+
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options" id="speaker"
+                                    autocomplete="off"><i class="fa-solid
+                                    fa-headphones"></i>
+                                Speakers
+                            </label>
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options"
+                                    id="light"
+                                    autocomplete="off"><i class="far
+                                    fa-lightbulb"></i>
+                                Lightbulb
+                            </label>
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options"
+                                    id="ac"
+                                    autocomplete="off"><i class="fa-solid
+                                    fa-snowflake"></i> AC
+                            </label>
+
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options" id="laptop"
+                                    autocomplete="off"><i class="fas
+                                    fa-laptop"></i> Laptop
+                            </label>
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options"
+                                    id="Camera"
+                                    autocomplete="off"><i class="fas
+                                    fa-thermometer-half"></i> Camera
+                            </label>
+                            <label class="btn btn-outline-primary">
+                                <input type="radio" name="options" id="other"
+                                    autocomplete="off"><i class="fa-solid
+                                    fa-computer-speaker"></i> Others
+                            </label>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="devicename"
+                            placeholder="iPhone12" autocomplete="off" required>
+                        <label for="devicename">Device Name:</label>
+                    </div>
+                    <br>
+               
+                    
+                   <!-- camera form -->
+                    <div id="camera-form" class="hidden">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cameraName" placeholder="Living Room Camera" autocomplete="off">
+                            <label for="cameraName">Camera Name</label>
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <select class="form-select" id="cameraStatus">
+                                <option value="" selected>Open this select menu</option>
+                                <option value="0">OFF</option>
+                                <option value="1">ON</option>
+                            </select>
+                            <label for="cameraStatus">Camera Status</label>
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cameraUrl" placeholder="rtsp://example.com/stream" autocomplete="off">
+                            <label for="cameraUrl">Stream URL (RTSP/WebRTC/HTTP)</label>
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <select class="form-select" id="cameraType">
+                                <option value="webrtc" selected>WebRTC</option>
+                                <option value="rtsp">RTSP</option>
+                                <option value="mjpeg">MJPEG</option>
+                                <option value="ip">IP Camera</option>
+                            </select>
+                            <label for="cameraType">Camera Type</label>
+                        </div>
+                    </div>
+                    <!-- light form -->
+                    <div id="light-form" class="hidden">
+                        <div class="form-floating">
+                            <select class="form-select" id="lightStatus">
+                                <option selected>Open this select menu</option>
+                                <option value="0">OFF</option>
+                                <option value="1">ON</option>
+                            </select>
+                            <label for="lightStatus">Lightbulb status:
+                                Choose</label>
+                        </div>
+                    </div>
+                    <!-- ac form -->
+                    <div id="ac-form" class="hidden">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="ACstatus"
+                                placeholder="AC status:" autocomplete="off">
+                            <label for="ACstatus">Status:</label>
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <input type="number" class="form-control"
+                                id="ACtemperature"
+                                placeholder="temperature" min ="16" max = "30" autocomplete="off">
+                            <label for="ACtemperature">Temperature:</label>
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <select class="form-select" id="fanspeed">
+                                <option selected>Open this select menu</option>
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
+                            </select>
+                            <label for="fanspeed">Fanspeed:
+                                Choose</label>
+                        </div>
+                    </div>
+                    <!-- laptop form -->
+                    <div id="laptop-form" class="hidden">
+                        
+                    
+                        <div class="form-floating">
+                            <input type="text" class="form-control"
+                                id="description"
+                                placeholder="Description" autocomplete="off">
+                            <label for="description">Description:</label>
+                        </div>
+                        <br>
+
+                        <div class="input-group flex-nowrap">
+                            <span class="input-group-text" id="price">$</span>
+                            <input type="text" class="form-control"
+                                placeholder="Price" aria-label="Price"
+                                aria-describedby="price">
+                        </div>
+                        <br>
+                        <div class="form-floating">
+                            <input type="text" class="form-control"
+                                id="imagelink"
+                                placeholder="Image link" autocomplete="off">
+                            <label for="imagelink">Image Link:</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="true" id="instock">
+                            <label class="form-check-label" for="instock">
+                              In Stock?
+                            </label>
+                          </div>
+                    </div>
+             
+                    <!-- checked box, for TOC -->
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                            value=""
+                            autocomplete="off"
+                            id="flexCheckDefault"
+                            onchange="document.getElementById('submbutton').disabled=
+                            !this.checked;">
+                        <label class="form-check-label"
+                            for="flexCheckDefault">
+                            I hereby accept the terms and conditions.
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        id="submbutton"
+                        autocomplete="off" disabled onclick="alert(`Device Added!`)">Submit</button>
+                </form>
+            </div>
+            
+
+
+
+            <!-- jQuery and Bootstrap JS -->
+            <script
+                src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script
+                src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+            <script
+                src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+                integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="./resources/scripts/app.js" data-main="scripts/app"
+                type="text/javascript"></script>
+            <script src="./resources/scripts/add-device.js"
+                data-main="scripts/app"
+                type="text/javascript"></script>
+            <link rel="stylesheet" href="./resources/css/style.css">
+
+
+        </body>
+    </html>

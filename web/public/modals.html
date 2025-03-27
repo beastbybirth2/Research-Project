@@ -1,0 +1,188 @@
+<!--Sign in Modal -->
+<div class="modal fade" id="loginBackdrop" data-bs-backdrop="static"
+    data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="loginBackdropLabel">Login
+                </h1>
+                <button type="button" class="btn-close"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="loginEmail"
+                        placeholder="Amanda" autocomplete="email">
+                    <label for="floatingInput">Email</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control"
+                        id="loginPassword"
+                        placeholder="iPhone 13" autocomplete="on">
+                    <label for="inputPassword">Password</label>
+                </div>
+                <!-- checked box, for TOC -->
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                        value=""
+                        autocomplete="off"
+                        id="flexCheckDefault"
+                        onchange="document.getElementById('loginButton').disabled=
+                        !this.checked;">
+                    <label class="form-check-label"
+                        for="flexCheckDefault">
+                        I hereby accepts the terms and conditions.
+                    </label>
+                </div>
+            </div>
+        </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#signupBackdrop">Sign Up</button>
+                <button type="button" class="btn btn-primary"
+                    id="loginButton"
+                    disabled="true" onclick="Login()">Login</button>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sign up -->
+<!--Sign up Modal -->
+<div class="modal fade" id="signupBackdrop" data-bs-backdrop="static"
+    data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="signupBackdropLabel">Login
+                </h1>
+                <button type="button" class="btn-close"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form class="was-validated row g-2" >
+                    <div class="col-md-6">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control"
+                                id="signupFirstname"
+                                required autocomplete="on">
+                            <label for="floatingInput">First name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control"
+                                id="signupSecondname"
+                                placeholder="Amanda" required>
+                            <label for="floatingInput" autocomplete="on">
+                                Second name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control"
+                                id="signupRoom"
+                                placeholder="123" required>
+                            <label for="floatingInput" autocomplete="on">
+                                Room Number</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">@</span>
+                        <div class="form-floating">
+                            <input type="email" class="form-control"
+                                id="signupEmail" placeholder="Email"
+                                required autocomplete="on">
+                            <label for="floatingInputGroup1">Email</label>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="form-floating">
+                            <input type="password" class="form-control"
+                                id="signupPassword" placeholder="Username"
+                                required autocomplete="on">
+                            <label for="floatingInputGroup1">Password</label>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="form-floating">
+                            <input type="password" class="form-control"
+                                id="signupPassword2" placeholder="Username"
+                                required autocomplete="on">
+                            <label for="floatingInputGroup1">Confirm Password</label>
+                        </div>
+                    </div>
+
+                    <!-- checked box, for toc -->
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                            value=""
+                            autocomplete="off"
+                            id="flexCheckDefault2"
+                            onchange="document.getElementById('signupbutt').disabled=
+                            !this.checked;">
+                        <label class="form-check-label"
+                            for="flexCheckDefault2">
+                            I am part of Staff/Developing Team.
+                        </label>
+                    </div>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button id="signupbutt" type="submit" class="btn btn-success"
+                    onclick="onClicker()" disabled>Create Account</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.3.min.js"
+integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
+crossorigin="anonymous"></script>
+
+        
+<script>
+    function onClicker() {
+        var fnamebool = true;
+        var snamebool = true;
+        var emailbool = true;
+        var pass1bool = true;
+        var pass2bool = true;
+    Firstname = document.getElementById("signupFirstname").value;
+    Secondname = document.getElementById("signupSecondname").value;
+    email = document.getElementById("signupEmail").value;
+    pass1 = document.getElementById("signupPassword").value;
+    pass2 = document.getElementById("signupPassword2").value;
+    if(Firstname === "") {
+        fnamebool = false;
+        
+    }
+    if(Secondname === "") {
+        snamebool = false;
+    }
+    if(email === "") {
+        emailbool = true;
+    }
+    if(pass1 === "") {
+        pass1bool = true;
+    }
+    if(pass2 === "") {
+        pass2bool = true;
+    }
+    else if(fnamebool && Secondname && emailbool && pass1bool&& pass2bool) {
+        SignUp()
+        $('#signupBackdrop').modal('hide');
+    }
+    }
+</script>
+
+

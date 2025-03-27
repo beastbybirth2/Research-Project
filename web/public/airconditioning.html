@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!-- to fix favicon error -->
+  <link rel="shortcut icon" href="#">
+  <head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="./resources/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Air Conditioners</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js"
+      integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
+      crossorigin="anonymous"></script>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+      crossorigin="anonymous">
+    
+  </head>
+  <style>
+      .card {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-body h4 {
+  font-weight: bold;
+}
+
+.temperature-controls,
+.fan-speed-controls {
+  display: flex;
+  align-items: center;
+}
+
+.temperature-controls button,
+.fan-speed-controls button {
+  margin-right: 10px;
+}
+
+.temperature,
+.fan-speed {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 10px;
+}
+
+.card-footer {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  text-align: center;
+}
+
+.toggle-button {
+  font-weight: bold;
+  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: none;
+  color: #fff;
+  background-color: #007bff;
+  transition
+: background-color 0.2s;
+}
+
+.toggle-button:hover {
+background-color: #0069d9;
+}
+
+.ac-off {
+background-color: #dc3545;
+}
+
+.ac-off .toggle-button {
+background-color: #dc3545;
+}
+
+.ac-on {
+background-color: #28a745;
+}
+
+.ac-on .toggle-button {
+background-color: #28a745;
+}
+
+.ac-mode {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+}
+
+.ac-mode button {
+margin-right: 10px;
+font-weight: bold;
+font-size: 16px;
+padding: 8px 16px;
+border-radius: 50px;
+border: none;
+color: #fff;
+background-color: #007bff;
+transition: background-color 0.2s;
+}
+
+.ac-mode button:hover {
+background-color: #0069d9;
+}
+    </style>
+  <body data-bs-theme="dark">
+    <!-- Jumbotron -->
+    <div id="navbar"></div>
+    <span style ="color: #dc3545;">
+
+
+
+
+    <!-- jQuery and Bootstrap JS -->
+    <script
+      src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+      integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="./resources/scripts/app.js" data-main="scripts/app"
+      type="text/javascript"></script>
+    <script src="./resources/scripts/display-acs.js"
+      data-main="scripts/app"
+      type="text/javascript"></script>
+    <link rel="stylesheet" href="./resources/css/style.css">
+
+
+  </body>
+</html>

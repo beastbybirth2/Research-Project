@@ -1,0 +1,380 @@
+<title>Smart Buildings Landing Page</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha512-XKjgH8tpYKKH1v/UxM2QzCkutAA8dHrvhzNvD97g/7pJhH8WY18Zdx23kxhNNJXmXf8kpFdSptFtPnlnKZPXlQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+<style>
+  /* add custom styles here */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+  }
+  
+  nav {
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px 0;
+  }
+  
+  nav ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  nav li {
+    margin: 0 10px;
+  }
+  
+  nav a {
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  nav a:hover {
+    color: #ff5722;
+  }
+  
+  header {
+    background-image: url('https://images.unsplash.com/photo-1573497495271-f6e0db25f435?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    color: #2a2828;
+    text-align: center;
+    padding: 150px 0;
+  }
+  
+  header h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+  
+  header p {
+    font-size: 24px;
+    margin-bottom: 40px;
+  }
+  
+  header button {
+    background-color: #ff5722;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  header button:hover {
+    background-color: #e64a19;
+  }
+  
+  main {
+    padding: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  section {
+    flex-basis: 30%;
+    margin-bottom: 50px;
+  }
+  
+  section h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+  }
+  
+  section p {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  
+  section ul {
+    list-style: none;
+    padding: 0;
+}
+
+section li {
+margin-bottom: 10px;
+}
+
+section i {
+margin-right: 10px;
+color: #ff5722;
+font-size: 24px;
+}
+
+footer {
+background-color: #fff;
+box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+padding: 20px 0;
+text-align: center;
+}
+
+footer p {
+font-size: 14px;
+color: #999;
+margin: 0;
+}
+
+/* add custom animations here */
+.fadeInUp {
+animation-duration: 1s;
+animation-fill-mode: both;
+animation-name: fadeInUp;
+}
+
+@keyframes fadeInUp {
+from {
+  opacity: 0;
+  transform: translate3d(0, 100%, 0);
+}
+
+to {
+  opacity: 1;
+  transform: none;
+}
+}
+
+.scaleIn {
+animation-duration: 1s;
+animation-fill-mode: both;
+animation-name: scaleIn;
+}
+
+@keyframes scaleIn {
+from {
+  transform: scale(0.5);
+}
+
+to {
+  transform: none;
+}
+}
+
+.rotateIn {
+animation-duration: 1s;
+animation-fill-mode: both;
+animation-name: rotateIn;
+}
+
+@keyframes rotateIn {
+from {
+  transform: rotate(-90deg);
+  opacity: 0;
+}
+
+to {
+  transform: none;
+  opacity: 1;
+}
+}
+</style>
+		<header>
+			<nav>
+				<ul>
+					<li><a href="/">Home</a></li>
+					<li><a href="/about">About</a></li>
+					<li><a href="/contact">Contact</a></li>
+				</ul>
+			</nav>
+		</header>
+		<main>
+			<h1>Contact Us</h1>
+			<p>Get in touch with us to learn more about Smart Buildings and our work.</p>
+			<form>
+				<label for="name">Name</label>
+				<input type="text" id="name" name="name" required>
+				<label for="email">Email</label>
+				<input type="email" id="email" name="email" required>
+				<label for="message">Message</label>
+				<textarea id="message" name="message" required></textarea>
+				<button type="submit">Submit</button>
+			</form>
+			<h2>Connect with us on social media</h2>
+			<ul>
+				<li><a href="https://www.instagram.com/aditya.src/">Instagram</a></li>
+			</ul>
+			<h2>Or reach out via email</h2>
+			<p>Email: <a href="mailto:thanx.adi@gmail.com">thanx.adi@gmail.com</a></p>
+		</main>
+		<footer>
+			<p>&copy; 2023 Smart Buildings. All rights reserved.</p>
+		</footer>
+	</body>
+</html>
+<style>
+/* Styles for header and nav */
+header {
+background-color: #343a40;
+color: #fff;
+padding: 20px;
+}
+
+nav ul {
+list-style-type: none;
+margin: 0;
+padding: 0;
+display: flex;
+justify-content: center;
+}
+
+nav li {
+margin: 0 10px;
+}
+
+nav a {
+color: #fff;
+text-decoration: none;
+font-weight: bold;
+font-size: 18px;
+transition: color 0.2s ease-in-out;
+}
+
+nav a:hover {
+color: #ffc107;
+}
+
+/* Styles for main content */
+main {
+max-width: 800px;
+margin: 0 auto;
+padding: 40px 20px;
+display: flex;
+flex-direction: column;
+align-items: center;
+text-align: center;
+}
+
+h1 {
+font-size: 40px;
+margin-bottom: 20px;
+}
+
+p {
+font-size: 18px;
+line-height: 1.5;
+margin-bottom: 40px;
+}
+
+form {
+display: flex;
+flex-direction: column;
+align-items: center;
+margin-bottom: 40px;
+}
+
+label {
+font-size: 18px;
+font-weight: bold;
+margin-bottom: 10px;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+width: 100%;
+padding: 10px;
+border-radius: 5px;
+border: 1px solid #ccc;
+margin-bottom: 20px;
+}
+
+textarea {
+height: 200px;
+}
+
+button[type="submit"] {
+background-color: #ffc107;
+color: #fff;
+padding: 10px 20px;
+border: none;
+border-radius: 5px;
+font-size: 18px;
+cursor: pointer;
+transition: background-color 0.2s ease-in-out;
+}
+
+button[type="submit"]:hover {
+background-color: #e0a800;
+}
+
+h2 {
+font-size: 28px;
+margin-bottom: 20px;
+}
+
+ul {
+list-style-type: none;
+margin: 0;
+padding: 0;
+}
+
+ul li {
+margin-bottom: 10px;
+}
+
+ul li a {
+color: #343a40;
+text-decoration: none;
+font-weight: bold;
+font-size: 18px;
+transition: color 0.2s ease-in-out;
+}
+
+ul li a:hover {
+color: #ffc107;
+}
+
+p a {
+color: #ffc107;
+text-decoration: none;
+}
+
+p a:hover {
+text-decoration: underline;
+}
+
+/* Styles for footer */
+footer {
+background-color: #343a40;
+color: #fff;
+padding: 20px;
+text-align: center;
+}
+
+footer p {
+margin: 0;
+font-size: 16px;
+}
+
+/* Logo animation */
+@keyframes rotate {
+0% {
+transform: rotate(0deg);
+}
+100% {
+transform: rotate(360deg);
+}
+}
+
+.logo {
+animation-name: rotate;
+animation-duration: 3s;
+animation-iteration-count: infinite;
+}
+
+.logo img {
+width: 50px;
+height: 50px;
+}
+</style>
