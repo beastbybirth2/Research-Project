@@ -789,6 +789,7 @@ app.post('/api/cameras', async (req, res) => {
             url,
             type
         });
+        console.log(newCamera)
         await newCamera.save();
         res.send({ message: "Camera added successfully.", id: newCamera._id });
     } catch (err) {

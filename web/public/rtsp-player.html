@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RTSP Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+    <video id="video" controls autoplay muted></video>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const rtspUrl = urlParams.get('stream');
+        
+        // For DroidCam specifically, we can try these approaches:
+        if (rtspUrl.includes('droidcam')) {
+            // Approach 1: Try using the VLC plugin if available
+            const vlcEmbed = document.createElement('embed');
+            vlcEmbed.type = 'application/x-vlc-plugin';
+            vlcEmbed.pluginspage = 'http://www.videolan.org';
+            vlcEmbed.width = '100%';
+            vlcEmbed.height = '100%';
+            vlcEmbed.autoplay = true;
+            vlcEmbed.target = rtspUrl;
+            
+            document.body.innerHTML = '';
+            document.body.appendChild(vlcEmbed);
+            
+            // Approach 2: Fallback to simple link if plugin not available
+            setTimeout(() => {
+                if (!document.querySelector('embed').play) {
+                    document.body.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <h3>RTSP Stream Requires VLC Plugin</h3>
+                            <p>Your browser cannot play RTSP streams directly.</p>
+                            <a href="${rtspUrl}" target="_blank" style="color: white;">
+                                Open stream in external player
+                            </a>
+                        </div>
+                    `;
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

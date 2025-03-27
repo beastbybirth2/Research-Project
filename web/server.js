@@ -13,11 +13,16 @@ const flash = require('connect-flash');
 
 const port = 3000;
 
-
 require('./config/passport')(passport);
 
 app.use(expressLayouts);
 app.set('view engine', 'ejs');
+
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 var sslOptions = {
     key: fs.readFileSync('key.pem'),
@@ -48,8 +53,7 @@ app.use(function (req, res, next) {
     res.locals.error = req.flash('error');
     next();
 });
-app.use(express.static('public'));
-app.use(express.urlencoded({ extended: true }));
+
 
 app.use(passport.initialize());
 app.use(passport.session());

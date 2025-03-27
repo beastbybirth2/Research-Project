@@ -13,69 +13,52 @@ router.get('/login', forwardAuthenticated, (req, res) => res.render('login'));
 router.get('/register', forwardAuthenticated, (req, res) => res.render('register'));
 
 // Register
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   const { name, email, roomnumber, password, password2 } = req.body;
+  const errors = [];
+  console.log('hi')
+  // console.log(req)
 
-  let errors = [];
-
+  // Validation
   if (!name || !email || !password || !password2) {
     errors.push({ msg: 'Please enter all fields' });
   }
-
-  if (password != password2) {
+  if (password !== password2) {
     errors.push({ msg: 'Passwords do not match' });
   }
-
   if (password.length < 6) {
     errors.push({ msg: 'Password must be at least 6 characters' });
   }
 
   if (errors.length > 0) {
-    res.render('register', {
-      errors,
+    return res.render('register', { errors, ...req.body });
+  }
+
+  try {
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      errors.push({ msg: 'Email already exists' });
+      return res.render('register', { errors, ...req.body });
+    }
+
+    // Create new user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
       name,
       email,
-      password,
-      password2
+      roomnumber,
+      password: hashedPassword
     });
-  } else {
-    User.findOne({ email: email }).then(user => {
-      if (user) {
-        errors.push({ msg: 'Email already exists' });
-        res.render('register', {
-          errors,
-          name,
-          email,
-          
-          password,
-          password2
-        });
-      } else {
-        const newUser = new User({
-          name,
-          email,
-          roomnumber,
-          password
-        });
 
-        bcrypt.genSalt(10, (err, salt) => {
-          bcrypt.hash(newUser.password, salt, (err, hash) => {
-            if (err) throw err;
-            newUser.password = hash;
-            newUser
-              .save()
-              .then(user => {
-                req.flash(
-                  'success_msg',
-                  'You are now registered and can log in'
-                );
-                res.redirect('/users/login');
-              })
-              .catch(err => console.log(err));
-          });
-        });
-      }
-    });
+    await newUser.save();
+    
+    req.flash('success_msg', 'You are now registered and can log in');
+    res.redirect('/users/login');
+  } catch (err) {
+    console.error('Registration error:', err);
+    req.flash('error_msg', 'Registration failed. Please try again.');
+    res.redirect('/users/register');
   }
 });
 

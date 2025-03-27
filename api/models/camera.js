@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Camera = mongoose.model('Camera', new mongoose.Schema({
+module.exports = mongoose.model('Camera', new mongoose.Schema({
     name: String,
     status: Boolean,
     url: String,
