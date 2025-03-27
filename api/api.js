@@ -817,6 +817,50 @@ app.delete('/api/cameras/delete', async (req, res) => {
     }
 });
 
+// In your api.js or server file
+app.get('/api/droidcam-proxy', async (req, res) => {
+    try {
+        const { url } = req.query;
+        
+        // Validate and format the URL
+        if (!url || !url.match(/^(http:\/\/)?(\d{1,3}\.){3}\d{1,3}(:\d+)?/)) {
+            return res.status(400).send('Invalid IP address format');
+        }
+
+        // Ensure proper URL format
+        let formattedUrl = url.startsWith('http://') ? url : `http://${url}`;
+        if (!formattedUrl.includes(':4747')) {
+            formattedUrl = formattedUrl.replace(/(:\d+)?(\/|$)/, ':4747$2');
+        }
+        if (!formattedUrl.includes('/video')) {
+            formattedUrl = formattedUrl.endsWith('/') ? 
+                `${formattedUrl}video` : 
+                `${formattedUrl}/video`;
+        }
+
+        // Forward the request
+        const response = await axios.get(formattedUrl, {
+            responseType: 'stream',
+            headers: {
+                'Accept': 'multipart/x-mixed-replace'
+            },
+            timeout: 5000
+        });
+
+        // Set proper headers
+        res.set({
+            'Content-Type': response.headers['content-type'] || 'multipart/x-mixed-replace',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        });
+
+        response.data.pipe(res);
+        
+    } catch (error) {
+        console.error('Proxy error:', error.message);
+        res.status(500).send(`Error forwarding DroidCam stream: ${error.message}`);
+    }
+});
 
 app.listen(port, () => {
     console.log(`listening on port ${port}`);

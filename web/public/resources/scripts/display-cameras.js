@@ -1,5 +1,13 @@
 const API_URL = 'http://localhost:5000/api/cameras';
 
+// Global retry function
+window.retryDroidCam = (elementId, streamUrl) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+        initDroidCamStream(element, streamUrl);
+    }
+};
+
 // Fetch data from MongoDB
 const fetchData = async () => {
     try {
@@ -11,30 +19,36 @@ const fetchData = async () => {
     }
 };
 
-// Create a card element with the given data
 const createCard = (data) => {
     const card = document.createElement('div');
     card.classList.add('col-md-6', 'mb-4');
-    card.dataset.cameraType = data.type; // Store camera type in dataset
+    card.dataset.cameraType = data.type;
+
+    // Extract clean IP for display
+    const ipMatch = data.url.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+    const displayUrl = ipMatch ? `http://${ipMatch[1]}:4747` : data.url;
 
     card.innerHTML = `
       <div class="card" id='${data._id}'>
         <div class="card-body">
           <h2 class="card-title">${data.name}</h2>
-          <div class="video-container">
+          <div class="video-container" id="container-${data._id}">
             ${data.status ? 
-              `<video id="video-${data._id}" autoplay playsinline muted></video>` : 
+              `<img id="video-${data._id}" style="width:100%;height:100%;object-fit:cover;">` : 
               `<div class="camera-offline">Camera is offline</div>`
             }
           </div>
           <div class="card-text mt-3">
             <p>Status: <span class="status-value">${data.status ? 'ON' : 'OFF'}</span></p>
             <p>Type: ${data.type}</p>
-            <p>URL: ${data.url}</p>
+            <p>IP Address: ${ipMatch ? ipMatch[1] : 'Invalid URL'}</p>
           </div>
           <div class="card-footer">
             <button class="btn btn-primary toggle-button">
               <i class="fa-solid fa-toggle-${data.status ? 'on' : 'off'}"></i> Toggle
+            </button>
+            <button class="btn btn-info view-button">
+              <i class="fa-solid fa-external-link-alt"></i> View Directly
             </button>
             <button class="btn btn-danger remove-button" style="float: right">
               <i class="fa-solid fa-trash-can"></i> Remove
@@ -47,69 +61,139 @@ const createCard = (data) => {
     return card;
 };
 
+// Initialize DroidCam stream with proxy
+// Initialize DroidCam stream with proxy (IP only)
+const initDroidCamStream = (videoElement, streamUrl) => {
+    // Clear existing content
+    videoElement.innerHTML = '';
+
+    // Create container
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.position = 'relative';
+
+    // Create image element
+    const img = document.createElement('img');
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+
+    // Format the URL (IP only)
+    let displayUrl, proxyUrl;
+    try {
+        // Extract clean IP for display
+        const ipMatch = streamUrl.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+        if (!ipMatch) throw new Error('Invalid IP format');
+        
+        const baseIp = ipMatch[1];
+        displayUrl = `http://${baseIp}:4747/video`;
+        
+        // Create proxy URL (still uses localhost for the proxy)
+        proxyUrl = `http://localhost:5000/api/droidcam-proxy?url=${encodeURIComponent(displayUrl)}&t=${Date.now()}`;
+        img.src = proxyUrl;
+
+    } catch (error) {
+        videoElement.innerHTML = `
+            <div class="alert alert-danger">
+                <h4>Configuration Error</h4>
+                <p>${error.message}</p>
+                <p>URL: ${streamUrl}</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Error handling
+    img.onerror = () => {
+        videoElement.innerHTML = `
+            <div class="alert alert-warning">
+                <h4>Connection Error</h4>
+                <p>Could not load camera feed.</p>
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-primary" 
+                        onclick="retryDroidCam('${videoElement.id}', '${streamUrl}')">
+                        Retry
+                    </button>
+                    <a href="${displayUrl}" 
+                       target="_blank"
+                       class="btn btn-sm btn-secondary">
+                        Open Directly (${displayUrl.split('/')[2]})
+                    </a>
+                </div>
+            </div>
+        `;
+    };
+
+    container.appendChild(img);
+    videoElement.appendChild(container);
+};
+
+// Update view button handler
+$(document).on('click', '.view-button', function(e) {
+    const card = $(this).closest('.card');
+    const cameraUrl = card.find('.card-text p:nth-child(3)').text().replace('URL: ', '');
+    
+    // Extract clean IP address
+    const ipMatch = cameraUrl.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+    if (!ipMatch) {
+        alert('Invalid IP address in camera URL');
+        return;
+    }
+    
+    const baseIp = ipMatch[1];
+    const viewUrl = `http://${baseIp}:4747`;
+    
+    window.open(viewUrl, '_blank', 'noopener,noreferrer');
+});
+
 // Initialize stream based on camera type
 const initCameraStream = (videoElementId, cameraData) => {
     const videoElement = document.getElementById(videoElementId);
     if (!videoElement) return;
-    console.log(videoElementId)
-    console.log(cameraData)
-    switch(cameraData.type) {
-        case 'webrtc':
-            initWebRTCStream(videoElement, cameraData.url);
-            break;
-        case 'rtsp':
-            initRTSPStream(videoElement, cameraData.url);
-            break;
-        case 'mjpeg':
-            initMJPEGStream(videoElement, cameraData.url);
-            break;
-        case 'ip':
-            initIPCameraStream(videoElement, cameraData.url);
-            break;
-        default:
-            console.error('Unknown camera type:', cameraData.type);
+
+    if (cameraData.url.includes('droidcam')) {
+        initDroidCamStream(videoElement, cameraData.url);
+    } else {
+        switch(cameraData.type) {
+            case 'webrtc':
+                initWebRTCStream(videoElement, cameraData.url);
+                break;
+            case 'rtsp':
+                initRTSPStream(videoElement, cameraData.url);
+                break;
+            case 'mjpeg':
+                initMJPEGStream(videoElement, cameraData.url);
+                break;
+            case 'ip':
+                initIPCameraStream(videoElement, cameraData.url);
+                break;
+            default:
+                console.error('Unknown camera type:', cameraData.type);
+        }
     }
 };
 
-// WebRTC Stream Initialization
+// Other stream initializations (unchanged)
 const initWebRTCStream = (videoElement, streamUrl) => {
     console.log(`Initializing WebRTC stream to ${streamUrl}`);
-    // Placeholder - implement actual WebRTC connection
-    // For demo purposes, we'll use a sample video
     videoElement.src = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4";
 };
 
-// RTSP Stream Initialization (requires proxy/transcoding)
 const initRTSPStream = (videoElement, streamUrl) => {
-    console.log(`Initializing RTSP stream from ${streamUrl}`);
-    
-    // Clear any existing content
-    videoElement.innerHTML = '';
-    
-    // Create an iframe that points to a simple HTML page with the stream
-    const iframe = document.createElement('iframe');
-    iframe.src = `/rtsp-player.html?stream=${encodeURIComponent(streamUrl)}`;
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = 'none';
-    iframe.allow = 'autoplay';
-    
-    videoElement.appendChild(iframe);
+    videoElement.innerHTML = `
+        <div class="alert alert-info">
+            RTSP streams require special handling. 
+            <a href="${streamUrl}" target="_blank">Open stream directly</a>
+        </div>`;
 };
 
-// MJPEG Stream Initialization
 const initMJPEGStream = (videoElement, streamUrl) => {
-    console.log(`Initializing MJPEG stream from ${streamUrl}`);
-    // MJPEG can be displayed directly in an img tag
-    // For video element, we might need to use a library
-    videoElement.innerHTML = `<img src="${streamUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    initDroidCamStream(videoElement, streamUrl);
 };
 
-// IP Camera Stream Initialization
 const initIPCameraStream = (videoElement, streamUrl) => {
     console.log(`Initializing IP Camera stream from ${streamUrl}`);
-    // IP cameras often use RTSP or proprietary protocols
-    // This would be similar to RTSP implementation
     videoElement.src = streamUrl;
 };
 
@@ -123,21 +207,16 @@ fetchData().then((data) => {
         return;
     }
 
-    // Clear existing content
     container.innerHTML = '';
-
-    // Create a card for each camera
     data.forEach(cameraData => {
         const card = createCard(cameraData);
         container.appendChild(card);
         
-        // Initialize stream if camera is active
         if (cameraData.status) {
-            initCameraStream(`video-${cameraData._id}`, cameraData);
+            initCameraStream(`container-${cameraData._id}`, cameraData);
         }
     });
 
-    // Set up event listeners
     setupEventListeners();
 }).catch(err => {
     console.error('Error loading cameras:', err);
@@ -157,7 +236,6 @@ function setupEventListeners() {
             data: { id: cameraId },
             success: function() {
                 card.remove();
-                // Show message if no cameras left
                 if ($('.card').length === 0) {
                     container.innerHTML = '<div class="alert alert-info">No cameras found. Add a camera to get started.</div>';
                 }
@@ -169,15 +247,23 @@ function setupEventListeners() {
         });
     });
 
+    // View button handler
+    $(document).on('click', '.view-button', function(e) {
+        const card = $(this).closest('.card');
+        const cameraUrl = card.find('.card-text p:nth-child(3)').text().replace('URL: ', '');
+        const httpUrl = cameraUrl.includes('droidcam') 
+            ? cameraUrl.replace('rtsp://', 'http://').replace('/cam', '')
+            : cameraUrl;
+        window.open(httpUrl, '_blank', 'noopener,noreferrer');
+    });
+
     // Toggle button handler
     $(document).on('click', '.toggle-button', function(e) {
         const card = $(this).closest('.card');
-        const cardWrapper = $(this).closest('.col-md-6'); // Get the parent div that has data-camera-type
         const cameraId = card.attr('id');
         const statusElement = card.find('.status-value');
         const currentStatus = statusElement.text() === 'ON';
         const newStatus = !currentStatus;
-        const cameraType = cardWrapper.data('camera-type'); // Get from the wrapper div
         const cameraUrl = card.find('.card-text p:nth-child(3)').text().replace('URL: ', '');
         
         $.ajax({
@@ -192,23 +278,14 @@ function setupEventListeners() {
                 
                 const videoContainer = card.find('.video-container');
                 if (newStatus) {
-                    videoContainer.html(`<video id="video-${cameraId}" autoplay playsinline muted></video>`);
-                    initCameraStream(`video-${cameraId}`, { 
-                        type: cameraType, 
-                        url: cameraUrl 
+                    videoContainer.html(`<img id="video-${cameraId}" style="width:100%;height:100%;object-fit:cover;">`);
+                    initCameraStream(`container-${cameraId}`, { 
+                        _id: cameraId,
+                        url: cameraUrl,
+                        type: card.closest('[data-camera-type]').dataset.cameraType,
+                        status: true
                     });
                 } else {
-                    const videoElement = document.getElementById(`video-${cameraId}`);
-                    if (videoElement) {
-                        // Stop all tracks if using WebRTC
-                        if (videoElement.srcObject) {
-                            videoElement.srcObject.getTracks().forEach(track => track.stop());
-                        }
-                        // Clear the source
-                        videoElement.src = '';
-                        // Remove the video element
-                        videoElement.remove();
-                    }
                     videoContainer.html('<div class="camera-offline">Camera is offline</div>');
                 }
             },
@@ -217,4 +294,5 @@ function setupEventListeners() {
                 alert('Failed to toggle camera status. Please try again.');
             }
         });
-    })}
+    });
+}
