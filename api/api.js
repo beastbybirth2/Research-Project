@@ -10,6 +10,7 @@ const AC = require('./models/ac.js');
 const Speaker = require('./models/speaker.js');
 const Thermostat = require('./models/thermostat.js');
 const Laptop = require('./models/laptop.js');
+const Camera = require('./models/camera.js');
 const axios = require('axios');
 
 const mqttApi = 'http://localhost:5000/'
@@ -768,6 +769,51 @@ app.get('/api/thermostats/delete', (req, res) => {
             res.send("Thermostat deleted successfully.")
         }
     });
+});
+
+app.get('/api/cameras', async (req, res) => {
+    try {
+        const doc = await Camera.find({});
+        res.send(doc);
+    } catch (err) {
+        res.status(500).send({ error: "Failed to fetch cameras" });
+    }
+});
+
+app.post('/api/cameras', async (req, res) => {
+    try {
+        const { name, status, url, type } = req.body;
+        const newCamera = new Camera({
+            name,
+            status: status === '1',
+            url,
+            type
+        });
+        await newCamera.save();
+        res.send({ message: "Camera added successfully.", id: newCamera._id });
+    } catch (err) {
+        res.status(500).send({ error: "Failed to add camera" });
+    }
+});
+
+app.post('/api/cameras/toggle', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        await Camera.findByIdAndUpdate(id, { status });
+        res.send({ message: "Camera status updated successfully." });
+    } catch (err) {
+        res.status(500).send({ error: "Failed to toggle camera status" });
+    }
+});
+
+app.delete('/api/cameras/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Camera.findByIdAndDelete(id);
+        res.send({ message: "Camera deleted successfully." });
+    } catch (err) {
+        res.status(500).send({ error: "Failed to delete camera" });
+    }
 });
 
 
