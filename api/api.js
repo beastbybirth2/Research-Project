@@ -821,109 +821,90 @@ app.delete("/api/cameras/delete", async (req, res) => {
 });
 
 app.get('/api/droidcam-proxy', async (req, res) => {
-    const requestUrl = req.query.url;
-    console.log(`[Proxy] Received request for URL: ${requestUrl}`); // Log incoming request
+  const requestUrl = req.query.url;
+  console.log(`[Proxy] Received request for URL: ${requestUrl}`);
 
-    if (!requestUrl) {
-        console.error('[Proxy] Error: Missing "url" query parameter.');
-        return res.status(400).send('Missing "url" query parameter.');
-    }
+  // ... (keep validation and target URL construction) ...
+  if (!requestUrl || !requestUrl.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/)) {
+      console.error(`[Proxy] Error: Invalid URL format: "${requestUrl}". Expected IP or IP:PORT.`);
+      return res.status(400).send('Invalid URL format. Provide only IP or IP:PORT.');
+  }
+  let targetIpPort = requestUrl.includes(':') ? requestUrl : `${requestUrl}:4747`;
+  const videoUrl = `http://${targetIpPort}/video`;
+  const mjpegUrl = `http://${targetIpPort}/mjpeg`;
+  let targetUrl = videoUrl;
+  // ... (keep retry logic if needed) ...
 
-    // Basic validation for IP or IP:PORT format
-    if (!requestUrl.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/)) {
-        console.error(`[Proxy] Error: Invalid URL format: "${requestUrl}". Expected IP or IP:PORT.`);
-        return res.status(400).send('Invalid URL format. Provide only IP or IP:PORT (e.g., 192.168.1.100 or 192.168.1.100:4747).');
-    }
+  let response;
+  let connectionError = null;
 
-    // Construct the target DroidCam URL
-    let targetIpPort = requestUrl.includes(':') ? requestUrl : `${requestUrl}:4747`;
-    const targetUrl = `http://${targetIpPort}/video`;
-    console.log(`[Proxy] Attempting to connect to target: ${targetUrl}`);
+  try {
+       // ... (keep the logic to try /video then /mjpeg) ...
+       // Example simplified try block - adapt if you kept the retry logic
+       console.log(`[Proxy] Attempting connection to: ${targetUrl}`);
+       response = await axios.get(targetUrl, {
+          responseType: 'stream',
+          timeout: 10000,
+          headers: {
+              'User-Agent': 'Mozilla/5.0',
+              'Accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+              'Connection': 'keep-alive'
+          }
+       });
 
-    try {
-        const response = await axios.get(targetUrl, {
-            responseType: 'stream', // Important for streaming MJPEG
-            timeout: 15000, // Increased timeout (15 seconds)
-            // Add headers that might help mimic a browser request if needed
-            headers: {
-                'User-Agent': 'Mozilla/5.0',
-                'Accept': '*/*' // Be lenient with accepted types
-            }
-        });
+      const contentType = response.headers['content-type'];
+       if (!contentType || !contentType.toLowerCase().includes('multipart/x-mixed-replace')) {
+           // Handle non-MJPEG or try fallback...
+           throw new Error(`Unexpected Content-Type: ${contentType}`);
+       }
+       // ... (rest of try/catch logic for retrying /mjpeg if needed) ...
 
-        console.log(`[Proxy] Connected to ${targetUrl}. Status: ${response.status}. Content-Type: ${response.headers['content-type']}`);
 
-        // --- Header Setting ---
-        const contentType = response.headers['content-type'];
-        // Check specifically for DroidCam's typical MJPEG header
-        if (contentType && contentType.toLowerCase().includes('multipart/x-mixed-replace')) {
-            res.set('Content-Type', contentType);
-        } else {
-            // If the content type is missing or unexpected, log a warning but still try setting the MJPEG type.
-            // Postman might still render it, but browsers might fail.
-            console.warn(`[Proxy] Warning: Unexpected Content-Type from ${targetUrl}: ${contentType}. Forcing MJPEG type for client.`);
-            res.set('Content-Type', 'multipart/x-mixed-replace; boundary=--BoundaryString'); // Common MJPEG boundary
-        }
+  } catch (error) {
+       // ... (keep existing error handling) ...
+       connectionError = error; // Store error
+       response = null;
+  }
 
-        // Headers to prevent caching and keep connection alive for stream
-        res.set({
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            'Connection': 'keep-alive' // Essential for MJPEG streams
-        });
 
-        // --- Stream Piping ---
-        console.log(`[Proxy] Piping stream from ${targetUrl} to client...`);
-        response.data.pipe(res);
+  // --- Final Check and Piping ---
+  if (response) {
+      // *** ADD CORS HEADER HERE ***
+      res.set('Access-Control-Allow-Origin', '*'); // Allow any origin (for development)
+      // For production, be more specific: res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
 
-        // Log when the DroidCam stream itself ends
-        response.data.on('end', () => {
-            console.log(`[Proxy] Stream from ${targetUrl} ended.`);
-            if (!res.writableEnded) {
-                 res.end(); // Ensure the client response is closed if the source ends
-            }
-        });
+      // Set MJPEG content type (if not already set by DroidCam response)
+      const currentContentType = response.headers['content-type'];
+      if (currentContentType && currentContentType.toLowerCase().includes('multipart/x-mixed-replace')) {
+           res.set('Content-Type', currentContentType);
+      } else {
+           console.warn(`[Proxy] Forcing MJPEG Content-Type as it was missing or wrong.`);
+           res.set('Content-Type', 'multipart/x-mixed-replace; boundary=--BoundaryString');
+      }
 
-        // Log errors during the piping process
-        response.data.on('error', (streamError) => {
-            console.error(`[Proxy] Error piping stream from ${targetUrl}:`, streamError.message);
-            if (!res.headersSent) {
-                // If headers haven't been sent yet, we can send a proper error status
-                 res.status(502).send(`Error during stream transfer: ${streamError.message}`);
-            } else {
-                // If headers already sent, we can only try to end the response abruptly
-                 res.end();
-            }
-        });
+      // Other streaming headers
+      res.set({
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Connection': 'keep-alive'
+      });
 
-        // Log when the client closes the connection
-        req.on('close', () => {
-            console.log(`[Proxy] Client closed connection for ${targetUrl}. Aborting request to DroidCam.`);
-            if (response.request) {
-                 response.request.abort(); // Abort the underlying HTTP request to DroidCam
-            } else if (response.data && response.data.destroy) {
-                 response.data.destroy(); // Try destroying the stream if possible
-            }
-        });
+      console.log(`[Proxy] Piping stream from ${targetUrl} to client...`);
+      response.data.pipe(res);
 
-    } catch (error) {
-        console.error(`[Proxy] Error connecting to or fetching from ${targetUrl}:`, error.message);
-        // Provide more specific error messages based on axios error structure
-        if (error.response) {
-            // The request was made and the server responded with a status code outside 2xx
-            console.error(`[Proxy] DroidCam server error: ${error.response.status} ${error.response.statusText}`);
-            res.status(error.response.status).send(`Error from DroidCam server: ${error.response.status} ${error.response.statusText}`);
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error(`[Proxy] No response received from DroidCam. Code: ${error.code}`);
-             res.status(504).send(`Could not connect to DroidCam at ${targetIpPort}. Is it running and accessible? (Code: ${error.code || 'N/A'})`);
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('[Proxy] Axios setup error:', error.message);
-             res.status(500).send(`Proxy setup error: ${error.message}`);
-        }
-    }
+      // ... (keep stream 'end', 'error', and req 'close' handlers) ...
+      response.data.on('end', () => { console.log(`[Proxy] Stream from ${targetUrl} ended.`); if (!res.writableEnded) { res.end(); } });
+      response.data.on('error', (streamError) => { console.error(`[Proxy] Error piping stream from ${targetUrl}:`, streamError.message); if (!res.headersSent) { res.status(502).send(`Error during stream transfer: ${streamError.message}`); } else { res.end(); } });
+      req.on('close', () => { console.log(`[Proxy] Client closed connection for ${targetUrl}. Aborting request.`); if (response.request && response.request.abort) { response.request.abort(); } else if (response.data && response.data.destroy) { response.data.destroy(); } });
+
+  } else {
+      // ... (keep existing final error handling) ...
+      console.error(`[Proxy] Failed to establish MJPEG stream for ${requestUrl}. Last error: ${connectionError?.message}`);
+      if (connectionError?.response) { res.status(connectionError.response.status).send(`Error from DroidCam server: ${connectionError.response.statusText}`); }
+      else if (connectionError?.request) { res.status(504).send(`Could not get valid stream from DroidCam at ${targetIpPort}. (Code: ${connectionError.code || 'N/A'})`); }
+      else { res.status(500).send(`Proxy error: ${connectionError?.message || 'Unknown error'}`); }
+  }
 });
 
 app.listen(port, () => {
