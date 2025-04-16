@@ -1,30 +1,30 @@
-const mongoose = require('mongoose');
-const express = require('express');
-const cors = require('cors');
+const mongoose = require("mongoose");
+const express = require("express");
+const cors = require("cors");
 const app = express();
 const port = 5000;
-const db = require('./config/keys').MongoURI;
+const db = require("./config/keys").MongoURI;
 mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true });
-const Light = require('./models/light.js');
-const AC = require('./models/ac.js');
-const Speaker = require('./models/speaker.js');
-const Thermostat = require('./models/thermostat.js');
-const Laptop = require('./models/laptop.js');
-const Camera = require('./models/camera.js');
-const axios = require('axios');
+const Light = require("./models/light.js");
+const AC = require("./models/ac.js");
+const Speaker = require("./models/speaker.js");
+const Thermostat = require("./models/thermostat.js");
+const Laptop = require("./models/laptop.js");
+const Camera = require("./models/camera.js");
+const axios = require("axios");
 
-const mqttApi = 'http://localhost:5000/'
+const mqttApi = "http://localhost:5000/";
 // enable CORS for all routes
 app.use(cors());
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 // Enable CORS for all requests
 app.use(function (req, res, next) {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    next();
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
 });
 
 /**
@@ -36,10 +36,9 @@ app.use(function (req, res, next) {
  *     HTTP/1.1 200 OK
  *     "The API is working!"
  */
-app.get('/api/test', (req, res) => {
-    res.send('The API is working!');
+app.get("/api/test", (req, res) => {
+  res.send("The API is working!");
 });
-
 
 /**
  * @api {get} /api/lights Request all lights
@@ -71,9 +70,9 @@ app.get('/api/test', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/lights', async(req, res) => {
-    const doc = await Light.find({});
-    res.send(doc);
+app.get("/api/lights", async (req, res) => {
+  const doc = await Light.find({});
+  res.send(doc);
 });
 /**
  * @api {post} /api/lights Add Light Device
@@ -95,13 +94,14 @@ app.get('/api/lights', async(req, res) => {
  *       "error": "Invalid request"
  *     }
  */
-app.post('/api/lights', (req, res) => {
-    const { name, status, } = req.body;
-    console.log(status);
-    const newDevice = new Light({
-        name, status
-    });
-    newDevice.save();
+app.post("/api/lights", (req, res) => {
+  const { name, status } = req.body;
+  console.log(status);
+  const newDevice = new Light({
+    name,
+    status,
+  });
+  newDevice.save();
 });
 /**
  * @api {post} /api/lights/delete Delete Light
@@ -122,15 +122,15 @@ app.post('/api/lights', (req, res) => {
  *       "error": "Invalid ID"
  *     }
  */
-app.post('/api/lights/delete', (req, res) => {
-    const id = req.body;
-    Light.deleteOne({ "_id": id }, function (err) {
-        if (err) {
-            console.log("err")
-        } else {
-            console.log("Deleted query")
-        }
-    });
+app.post("/api/lights/delete", (req, res) => {
+  const id = req.body;
+  Light.deleteOne({ _id: id }, function (err) {
+    if (err) {
+      console.log("err");
+    } else {
+      console.log("Deleted query");
+    }
+  });
 });
 /**
  * @api {get} /api/lights/test Request all lights from mock data
@@ -169,8 +169,8 @@ app.post('/api/lights/delete', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/lights/test', (req, res) => {
-    res.sendFile(__dirname + "/mock/bulbs.json")
+app.get("/api/lights/test", (req, res) => {
+  res.sendFile(__dirname + "/mock/bulbs.json");
 });
 /**
  * @api {post} /api/acs Add AC Device
@@ -195,13 +195,15 @@ app.get('/api/lights/test', (req, res) => {
  *     }
  */
 // Air conditioning POST req
-app.post('/api/acs', (req, res) => {
- 
-    const { name, status, temp, fan } = req.body;
-    const newDevice = new AC({
-        name, status, temp, fan
-    });
-    newDevice.save();
+app.post("/api/acs", (req, res) => {
+  const { name, status, temp, fan } = req.body;
+  const newDevice = new AC({
+    name,
+    status,
+    temp,
+    fan,
+  });
+  newDevice.save();
 });
 /**
  * @api {get} /api/acs Request all acs
@@ -253,9 +255,9 @@ app.post('/api/acs', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/acs', async(req, res) => {
-    const doc = await AC.find({}); 
-    res.send(doc);
+app.get("/api/acs", async (req, res) => {
+  const doc = await AC.find({});
+  res.send(doc);
 });
 /**
  * @api {post} /api/acs/update Update AC Device
@@ -278,25 +280,25 @@ app.get('/api/acs', async(req, res) => {
  *       "error": "Invalid request"
  *     }
  */
-app.post('/api/acs/update', (req, res) => {
-    const { id, temp, fan } = req.body;
-    AC.findOne({ "_id": id }).exec(function (err, oldDevice) {
+app.post("/api/acs/update", (req, res) => {
+  const { id, temp, fan } = req.body;
+  AC.findOne({ _id: id }).exec(function (err, oldDevice) {
+    if (err) {
+      // Handle error
+    } else if (oldDevice) {
+      oldDevice.temp = temp;
+      oldDevice.fan = fan;
+      oldDevice.save(function (err) {
         if (err) {
-            // Handle error
-        } else if (oldDevice) {
-            oldDevice.temp = temp;
-            oldDevice.fan = fan;
-            oldDevice.save(function (err) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log("document updated");
-                }
-            });
+          console.log(err);
         } else {
-            console.log("// Document not found");
+          console.log("document updated");
         }
-    });
+      });
+    } else {
+      console.log("// Document not found");
+    }
+  });
 });
 /**
  * @api {post} /api/acs/delete Delete AC Device
@@ -317,15 +319,15 @@ app.post('/api/acs/update', (req, res) => {
  *       "error": "Invalid request"
  *     }
  */
-app.post('/api/acs/delete', (req, res) => {
-    const { id } = req.body;
-    AC.deleteOne({ "_id": id }, function (err) {
-        if (err) {
-            console.log("err")
-        } else {
-            console.log("Deleted query")
-        }
-    });
+app.post("/api/acs/delete", (req, res) => {
+  const { id } = req.body;
+  AC.deleteOne({ _id: id }, function (err) {
+    if (err) {
+      console.log("err");
+    } else {
+      console.log("Deleted query");
+    }
+  });
 });
 /**
  * @api {get} /api/acs/test Request all acs from mock data
@@ -378,8 +380,8 @@ app.post('/api/acs/delete', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/acs/test', (req, res) => {
-    res.sendFile(__dirname + "/mock/acs.json")
+app.get("/api/acs/test", (req, res) => {
+  res.sendFile(__dirname + "/mock/acs.json");
 });
 //laptops
 /**
@@ -421,9 +423,9 @@ app.get('/api/acs/test', (req, res) => {
  *       "error": "Internal server error"
  *     }
  */
-app.get('/api/laptops', async(req, res) => {
-    const doc = await Laptop.find({}); 
-    res.send(doc);
+app.get("/api/laptops", async (req, res) => {
+  const doc = await Laptop.find({});
+  res.send(doc);
 });
 /**
  * @api {post} /api/laptops Create a new laptop
@@ -447,17 +449,17 @@ app.get('/api/laptops', async(req, res) => {
  *       "error": "Invalid request"
  *     }
  */
-app.post('/api/laptops', (req, res) => {
-    const { name,
-        instock,
-        imagelink,
-        description,
-        price, } = req.body;
-        image = imagelink
-    const newDevice = new Laptop({
-        name, instock, image, description, price
-    });
-    newDevice.save();
+app.post("/api/laptops", (req, res) => {
+  const { name, instock, imagelink, description, price } = req.body;
+  image = imagelink;
+  const newDevice = new Laptop({
+    name,
+    instock,
+    image,
+    description,
+    price,
+  });
+  newDevice.save();
 });
 /**
  * @api {get} /api/lights/test Request mock laptops data
@@ -523,8 +525,8 @@ app.post('/api/laptops', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/laptops/test', (req, res) => {
-    res.sendFile(__dirname + "/mock/laptops.json")
+app.get("/api/laptops/test", (req, res) => {
+  res.sendFile(__dirname + "/mock/laptops.json");
 });
 /**
  * @api {delete} /api/laptops/delete Delete a laptop
@@ -545,15 +547,15 @@ app.get('/api/laptops/test', (req, res) => {
  *       "error": "Laptop not found"
  *     }
  */
-app.get('/api/laptops/delete', (req, res) => {
-    const id = req.body;
-    Laptop.deleteOne({ "_id": id }, function (err) {
-        if (err) {
-            console.log("err")
-        } else {
-            console.log("Deleted query")
-        }
-    });
+app.get("/api/laptops/delete", (req, res) => {
+  const id = req.body;
+  Laptop.deleteOne({ _id: id }, function (err) {
+    if (err) {
+      console.log("err");
+    } else {
+      console.log("Deleted query");
+    }
+  });
 });
 /**
  * @api {get} /api/speakers Get all speakers
@@ -568,9 +570,9 @@ app.get('/api/laptops/delete', (req, res) => {
  *
  * @apiDescription Get a list of all speakers.
  */
-app.get('/api/speakers', async(req, res) => {
-    const doc = await Speaker.find({}); 
-    res.send(doc);
+app.get("/api/speakers", async (req, res) => {
+  const doc = await Speaker.find({});
+  res.send(doc);
 });
 /**
  * @api {post} /api/speakers Add a new speaker
@@ -580,7 +582,7 @@ app.get('/api/speakers', async(req, res) => {
  * @apiParam {String} name Name of the speaker
  *
  * @apiSuccess {String} message Success message
- * 
+ *
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -600,12 +602,12 @@ app.get('/api/speakers', async(req, res) => {
  *
  * @apiDescription Add a new speaker to the database.
  */
-app.post('/api/speakers', (req, res) => {
-    const { name } = req.body;
-    const newDevice = new Speaker({
-        name
-    });
-    newDevice.save();
+app.post("/api/speakers", (req, res) => {
+  const { name } = req.body;
+  const newDevice = new Speaker({
+    name,
+  });
+  newDevice.save();
 });
 /**
  * @api {get} /api/speakers/delete Delete a speaker
@@ -620,17 +622,16 @@ app.post('/api/speakers', (req, res) => {
  *
  * @apiDescription Delete a speaker from the database.
  */
-app.get('/api/speakers/delete', (req, res) => {
-    const id = req.body;
-    Speaker.deleteOne({ "_id": id }, function (err) {
-        if (err) {
-            console.log(err)
-            res.send(err);
-        } else {
-            
-            res.send("Deleted Speaker");
-        }
-    });
+app.get("/api/speakers/delete", (req, res) => {
+  const id = req.body;
+  Speaker.deleteOne({ _id: id }, function (err) {
+    if (err) {
+      console.log(err);
+      res.send(err);
+    } else {
+      res.send("Deleted Speaker");
+    }
+  });
 });
 /**
  * @api {get} /api/speakers/test Request speakers mock data
@@ -674,8 +675,8 @@ app.get('/api/speakers/delete', (req, res) => {
  *       "error": "Error message"
  *     }
  */
-app.get('/api/speakers/test', (req, res) => {
-    res.sendFile(__dirname + "/mock/speakers.json")
+app.get("/api/speakers/test", (req, res) => {
+  res.sendFile(__dirname + "/mock/speakers.json");
 });
 
 /**
@@ -706,9 +707,9 @@ app.get('/api/speakers/test', (req, res) => {
  *       "error": "Failed to retrieve thermostats."
  *     }
  */
-app.get('/api/thermostats', async(req, res) => {
-    const doc = await Thermostat.find({}); 
-    res.send(doc);
+app.get("/api/thermostats", async (req, res) => {
+  const doc = await Thermostat.find({});
+  res.send(doc);
 });
 /**
  * @api {post} /api/thermostats Add a new thermostat
@@ -731,16 +732,18 @@ app.get('/api/thermostats', async(req, res) => {
  *       "error": "Failed to add thermostat."
  *     }
  */
-app.post('/api/thermostats', (req, res) => {
-    const { name, status, temperature } = req.body;
-    const newDevice = new Thermostat({
-        name, status, temperature
-    });
-    newDevice.save();
-    res.send("Thermostat added successfully.")
+app.post("/api/thermostats", (req, res) => {
+  const { name, status, temperature } = req.body;
+  const newDevice = new Thermostat({
+    name,
+    status,
+    temperature,
+  });
+  newDevice.save();
+  res.send("Thermostat added successfully.");
 });
-app.get('/api/thermostats/test', (req, res) => {
-    res.sendFile(__dirname + "/mock/thermostats.json")
+app.get("/api/thermostats/test", (req, res) => {
+  res.sendFile(__dirname + "/mock/thermostats.json");
 });
 /**
  * @api {delete} /api/thermostats/:id Delete a thermostat
@@ -758,150 +761,214 @@ app.get('/api/thermostats/test', (req, res) => {
  *
  * @apiDescription Delete a speaker from the database.
  */
-app.get('/api/thermostats/delete', (req, res) => {
-    const id = req.body;
-    Thermostat.deleteOne({ "_id": id }, function (err) {
-        if (err) {
-            console.log(err)
-            res.send(err)
-        } else {
-            console.log("Deleted query")
-            res.send("Thermostat deleted successfully.")
-        }
+app.get("/api/thermostats/delete", (req, res) => {
+  const id = req.body;
+  Thermostat.deleteOne({ _id: id }, function (err) {
+    if (err) {
+      console.log(err);
+      res.send(err);
+    } else {
+      console.log("Deleted query");
+      res.send("Thermostat deleted successfully.");
+    }
+  });
+});
+
+app.get("/api/cameras", async (req, res) => {
+  try {
+    const doc = await Camera.find({});
+    res.send(doc);
+  } catch (err) {
+    res.status(500).send({ error: "Failed to fetch cameras" });
+  }
+});
+
+app.post("/api/cameras", async (req, res) => {
+  try {
+    const { name, status, url, type } = req.body;
+    const newCamera = new Camera({
+      name,
+      status: status === "1",
+      url,
+      type,
     });
+    console.log(newCamera);
+    await newCamera.save();
+    res.send({ message: "Camera added successfully.", id: newCamera._id });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to add camera" });
+  }
 });
 
-app.get('/api/cameras', async (req, res) => {
-    try {
-        const doc = await Camera.find({});
-        res.send(doc);
-    } catch (err) {
-        res.status(500).send({ error: "Failed to fetch cameras" });
-    }
+app.post("/api/cameras/toggle", async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    await Camera.findByIdAndUpdate(id, { status });
+    res.send({ message: "Camera status updated successfully." });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to toggle camera status" });
+  }
 });
 
-app.post('/api/cameras', async (req, res) => {
-    try {
-        const { name, status, url, type } = req.body;
-        const newCamera = new Camera({
-            name,
-            status: status === '1',
-            url,
-            type
-        });
-        console.log(newCamera)
-        await newCamera.save();
-        res.send({ message: "Camera added successfully.", id: newCamera._id });
-    } catch (err) {
-        res.status(500).send({ error: "Failed to add camera" });
-    }
+app.delete("/api/cameras/delete", async (req, res) => {
+  try {
+    const { id } = req.body;
+    await Camera.findByIdAndDelete(id);
+    res.send({ message: "Camera deleted successfully." });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to delete camera" });
+  }
 });
 
-app.post('/api/cameras/toggle', async (req, res) => {
-    try {
-        const { id, status } = req.body;
-        await Camera.findByIdAndUpdate(id, { status });
-        res.send({ message: "Camera status updated successfully." });
-    } catch (err) {
-        res.status(500).send({ error: "Failed to toggle camera status" });
-    }
-});
-
-app.delete('/api/cameras/delete', async (req, res) => {
-    try {
-        const { id } = req.body;
-        await Camera.findByIdAndDelete(id);
-        res.send({ message: "Camera deleted successfully." });
-    } catch (err) {
-        res.status(500).send({ error: "Failed to delete camera" });
-    }
-});
-
-// In your api.js or server file
 app.get('/api/droidcam-proxy', async (req, res) => {
+    const requestUrl = req.query.url;
+    console.log(`[Proxy] Received request for URL: ${requestUrl}`); // Log incoming request
+
+    if (!requestUrl) {
+        console.error('[Proxy] Error: Missing "url" query parameter.');
+        return res.status(400).send('Missing "url" query parameter.');
+    }
+
+    // Basic validation for IP or IP:PORT format
+    if (!requestUrl.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/)) {
+        console.error(`[Proxy] Error: Invalid URL format: "${requestUrl}". Expected IP or IP:PORT.`);
+        return res.status(400).send('Invalid URL format. Provide only IP or IP:PORT (e.g., 192.168.1.100 or 192.168.1.100:4747).');
+    }
+
+    // Construct the target DroidCam URL
+    let targetIpPort = requestUrl.includes(':') ? requestUrl : `${requestUrl}:4747`;
+    const targetUrl = `http://${targetIpPort}/video`;
+    console.log(`[Proxy] Attempting to connect to target: ${targetUrl}`);
+
     try {
-        const { url } = req.query;
-        
-        // Validate and format the URL
-        if (!url || !url.match(/^(http:\/\/)?(\d{1,3}\.){3}\d{1,3}(:\d+)?/)) {
-            return res.status(400).send('Invalid IP address format');
-        }
-
-        // Ensure proper URL format
-        let formattedUrl = url.startsWith('http://') ? url : `http://${url}`;
-        if (!formattedUrl.includes(':4747')) {
-            formattedUrl = formattedUrl.replace(/(:\d+)?(\/|$)/, ':4747$2');
-        }
-        if (!formattedUrl.includes('/video')) {
-            formattedUrl = formattedUrl.endsWith('/') ? 
-                `${formattedUrl}video` : 
-                `${formattedUrl}/video`;
-        }
-
-        // Forward the request
-        const response = await axios.get(formattedUrl, {
-            responseType: 'stream',
+        const response = await axios.get(targetUrl, {
+            responseType: 'stream', // Important for streaming MJPEG
+            timeout: 15000, // Increased timeout (15 seconds)
+            // Add headers that might help mimic a browser request if needed
             headers: {
-                'Accept': 'multipart/x-mixed-replace'
-            },
-            timeout: 5000
+                'User-Agent': 'Mozilla/5.0',
+                'Accept': '*/*' // Be lenient with accepted types
+            }
         });
 
-        // Set proper headers
+        console.log(`[Proxy] Connected to ${targetUrl}. Status: ${response.status}. Content-Type: ${response.headers['content-type']}`);
+
+        // --- Header Setting ---
+        const contentType = response.headers['content-type'];
+        // Check specifically for DroidCam's typical MJPEG header
+        if (contentType && contentType.toLowerCase().includes('multipart/x-mixed-replace')) {
+            res.set('Content-Type', contentType);
+        } else {
+            // If the content type is missing or unexpected, log a warning but still try setting the MJPEG type.
+            // Postman might still render it, but browsers might fail.
+            console.warn(`[Proxy] Warning: Unexpected Content-Type from ${targetUrl}: ${contentType}. Forcing MJPEG type for client.`);
+            res.set('Content-Type', 'multipart/x-mixed-replace; boundary=--BoundaryString'); // Common MJPEG boundary
+        }
+
+        // Headers to prevent caching and keep connection alive for stream
         res.set({
-            'Content-Type': response.headers['content-type'] || 'multipart/x-mixed-replace',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Connection': 'keep-alive' // Essential for MJPEG streams
         });
 
+        // --- Stream Piping ---
+        console.log(`[Proxy] Piping stream from ${targetUrl} to client...`);
         response.data.pipe(res);
-        
+
+        // Log when the DroidCam stream itself ends
+        response.data.on('end', () => {
+            console.log(`[Proxy] Stream from ${targetUrl} ended.`);
+            if (!res.writableEnded) {
+                 res.end(); // Ensure the client response is closed if the source ends
+            }
+        });
+
+        // Log errors during the piping process
+        response.data.on('error', (streamError) => {
+            console.error(`[Proxy] Error piping stream from ${targetUrl}:`, streamError.message);
+            if (!res.headersSent) {
+                // If headers haven't been sent yet, we can send a proper error status
+                 res.status(502).send(`Error during stream transfer: ${streamError.message}`);
+            } else {
+                // If headers already sent, we can only try to end the response abruptly
+                 res.end();
+            }
+        });
+
+        // Log when the client closes the connection
+        req.on('close', () => {
+            console.log(`[Proxy] Client closed connection for ${targetUrl}. Aborting request to DroidCam.`);
+            if (response.request) {
+                 response.request.abort(); // Abort the underlying HTTP request to DroidCam
+            } else if (response.data && response.data.destroy) {
+                 response.data.destroy(); // Try destroying the stream if possible
+            }
+        });
+
     } catch (error) {
-        console.error('Proxy error:', error.message);
-        res.status(500).send(`Error forwarding DroidCam stream: ${error.message}`);
+        console.error(`[Proxy] Error connecting to or fetching from ${targetUrl}:`, error.message);
+        // Provide more specific error messages based on axios error structure
+        if (error.response) {
+            // The request was made and the server responded with a status code outside 2xx
+            console.error(`[Proxy] DroidCam server error: ${error.response.status} ${error.response.statusText}`);
+            res.status(error.response.status).send(`Error from DroidCam server: ${error.response.status} ${error.response.statusText}`);
+        } else if (error.request) {
+            // The request was made but no response was received
+            console.error(`[Proxy] No response received from DroidCam. Code: ${error.code}`);
+             res.status(504).send(`Could not connect to DroidCam at ${targetIpPort}. Is it running and accessible? (Code: ${error.code || 'N/A'})`);
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            console.error('[Proxy] Axios setup error:', error.message);
+             res.status(500).send(`Proxy setup error: ${error.message}`);
+        }
     }
 });
 
 app.listen(port, () => {
-    console.log(`listening on port ${port}`);
+  console.log(`listening on port ${port}`);
 });
 app.use(express.static(`${__dirname}/public/generated-docs`));
 
-app.get('/docs', (req, res) => {
-    res.sendFile(`${__dirname}/public/generated-docs/index.html`);
+app.get("/docs", (req, res) => {
+  res.sendFile(`${__dirname}/public/generated-docs/index.html`);
 });
-try{
-//Read data from sensor
-const { SerialPort, ReadlineParser } = require('serialport')
-const portName = 'COM6';
-const baudRate = 9600;
+try {
+  //Read data from sensor
+  const { SerialPort, ReadlineParser } = require("serialport");
+  const portName = "COM6";
+  const baudRate = 9600;
 
-const sensorport = new SerialPort({ path: portName, baudRate: baudRate })
-const parser = new ReadlineParser()
-sensorport.pipe(parser)
+  const sensorport = new SerialPort({ path: portName, baudRate: baudRate });
+  const parser = new ReadlineParser();
+  sensorport.pipe(parser);
 
-sensorport.on('open', function() {
-  console.log('Serial port ' + portName + ' is open.');
-});
-
-parser.on('data', async function(data) {
-  const sensorData = { name: 25, status: data.slice(0,-1) == 'Motion detected' };
-  console.log(sensorData);
-
-   axios.post('http://localhost:5001/motion-status', sensorData)
-});
-sensorport.on('error', function(err) {
-    console.error('Error:', err.message);
+  sensorport.on("open", function () {
+    console.log("Serial port " + portName + " is open.");
   });
-  
-  process.on('SIGINT', function() {
-    sensorport.close(function(err) {
+
+  parser.on("data", async function (data) {
+    const sensorData = {
+      name: 25,
+      status: data.slice(0, -1) == "Motion detected",
+    };
+    console.log(sensorData);
+
+    axios.post("http://localhost:5001/motion-status", sensorData);
+  });
+  sensorport.on("error", function (err) {
+    console.error("Error:", err.message);
+  });
+
+  process.on("SIGINT", function () {
+    sensorport.close(function (err) {
       if (err) {
-        console.error('Error closing serial port:', err.message);
+        console.error("Error closing serial port:", err.message);
       }
       process.exit();
     });
   });
-} catch(e) {
-    console.log(e);
+} catch (e) {
+  console.log(e);
 }
