@@ -105,6 +105,11 @@ app.get('/add-device', ensureAuthenticated, (req, res) => {
 app.get('/stats', ensureAuthenticated, (req, res) => {
     res.sendFile(`${base}/chart.html`);
 });
+
+app.get('/intrusion-logs', ensureAuthenticated, (req, res) => { 
+    res.sendFile(`${base}/intrusion-logs.html`);
+});
+
 app.get('/me',  (req, res) => {
     res.sendFile(`${base}/me.html`);
 });

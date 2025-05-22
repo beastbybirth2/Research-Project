@@ -12,8 +12,41 @@ const Thermostat = require("./models/thermostat.js");
 const Laptop = require("./models/laptop.js");
 const Camera = require("./models/camera.js");
 const axios = require("axios");
+const KnownFace = require("./models/knownFace.js"); // ADD THIS
+const UnknownFaceLog = require("./models/unknownFaceLog.js");
+
+const nodemailer = require("nodemailer");
+const appConfig = require("./config/keys");
 
 const mqttApi = "http://localhost:5000/";
+
+let transporter;
+if (appConfig.emailConfig && appConfig.emailConfig.auth.user) {
+    transporter = nodemailer.createTransport({
+        host: appConfig.emailConfig.host,
+        port: appConfig.emailConfig.port,
+        secure: appConfig.emailConfig.secure,
+        auth: {
+            user: appConfig.emailConfig.auth.user,
+            pass: appConfig.emailConfig.auth.pass,
+        },
+        tls: {
+            // do not fail on invalid certs (for local/dev SMTP servers)
+            rejectUnauthorized: false
+        }
+    });
+
+    transporter.verify(function (error, success) {
+        if (error) {
+            console.error("Nodemailer verification error:", error);
+        } else {
+            console.log("Nodemailer is ready to send emails.");
+        }
+    });
+} else {
+    console.warn("Email configuration not found or incomplete. Email alerts will be disabled.");
+}
+
 // enable CORS for all routes
 app.use(cors());
 const bodyParser = require("body-parser");
@@ -26,6 +59,122 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
+
+app.post("/api/known-faces", async (req, res) => {
+  try {
+    const { name, descriptors } = req.body;
+    if (!name || !descriptors || descriptors.length === 0) {
+      return res.status(400).send({ error: "Name and descriptors are required." });
+    }
+    if (!Array.isArray(descriptors) || !descriptors.every(d => Array.isArray(d) && d.every(n => typeof n === 'number'))) {
+        return res.status(400).send({ error: "Invalid descriptors format."});
+    }
+    const existingFace = await KnownFace.findOne({ name });
+    if (existingFace) {
+      // Option: update descriptors or prevent duplicates
+      // For now, we'll update if found, or create if not.
+      existingFace.descriptors = descriptors;
+      await existingFace.save();
+      res.send({ message: "Known face updated successfully.", knownFace: existingFace });
+    } else {
+      const newKnownFace = new KnownFace({ name, descriptors });
+      await newKnownFace.save();
+      res.status(201).send({ message: "Known face added successfully.", knownFace: newKnownFace });
+    }
+  } catch (err) {
+    console.error("Error in /api/known-faces POST:", err);
+    res.status(500).send({ error: "Failed to add/update known face: " + err.message });
+  }
+});
+
+app.get("/api/intrusion-logs", async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const logs = await UnknownFaceLog.find({})
+            .sort({ timestamp: -1 }) // Newest first
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const totalLogs = await UnknownFaceLog.countDocuments();
+
+        res.send({
+            logs,
+            totalPages: Math.ceil(totalLogs / limit),
+            currentPage: page,
+            totalLogs
+        });
+    } catch (err) {
+        console.error("Error fetching intrusion logs:", err);
+        res.status(500).send({ error: "Failed to fetch intrusion logs." });
+    }
+});
+
+
+app.get("/api/known-faces", async (req, res) => {
+  try {
+    const knownFaces = await KnownFace.find({}, 'name descriptors').lean();
+    // Structure for face-api.js LabeledFaceDescriptors on client: { label: string, descriptors: Float32Array[] }
+    const clientReadyKnownFaces = knownFaces.map(face => ({
+        label: face.name,
+        descriptors: face.descriptors.map(dArray => new Float32Array(dArray)) // Client will reconstruct Float32Array
+    }));
+    res.send(clientReadyKnownFaces);
+  } catch (err) {
+    console.error("Error in /api/known-faces GET:", err);
+    res.status(500).send({ error: "Failed to fetch known faces." });
+  }
+});
+
+
+app.post("/api/face-alert", async (req, res) => {
+  try {
+    const { faceImage, cameraName } = req.body;
+    if (!faceImage) {
+      return res.status(400).send({ error: "Face image is required." });
+    }
+    const newLog = new UnknownFaceLog({ faceImage, cameraName });
+    await newLog.save();
+    
+    const alertMessage = `ALERT: Unknown face detected on camera [${cameraName || 'N/A'}]. Image logged with ID: ${newLog._id}. Check intrusion logs.`;
+    console.log(alertMessage);
+
+    // Send Email Alert
+    if (transporter && appConfig.emailConfig.alertRecipient) {
+        const mailOptions = {
+            from: `"Smart Building System" <${appConfig.emailConfig.auth.user}>`,
+            to: appConfig.emailConfig.alertRecipient,
+            subject: 'Unknown Face Detected!',
+            html: `<p>${alertMessage}</p><p>Timestamp: ${newLog.timestamp.toLocaleString()}</p><img src="${faceImage}" alt="Unknown Face" style="max-width: 300px;"/>`,
+            // To embed image directly (cid approach):
+            // html: `<p>${alertMessage}</p><p>Timestamp: ${newLog.timestamp.toLocaleString()}</p><img src="cid:unknownface@smartbuilding.com"/>`,
+            // attachments: [{
+            //     filename: 'unknown_face.jpg',
+            //     path: faceImage, // if faceImage is a path to a file
+            //     cid: 'unknownface@smartbuilding.com' // should match cid in html
+            // }]
+            // Note: For base64 data URI, direct embedding in <img> src works for most email clients.
+        };
+        try {
+            let info = await transporter.sendMail(mailOptions);
+            console.log("Email alert sent: " + info.response);
+        } catch (emailError) {
+            console.error("Error sending email alert:", emailError);
+        }
+    } else {
+        console.warn("Email transporter not configured or recipient missing. Skipping email alert.");
+    }
+
+    res.status(200).send({ message: "Unknown face alert received, logged, and email attempted.", logId: newLog._id, loggedEntry: newLog });
+  } catch (err) {
+    console.error("Error in /api/face-alert POST:", err);
+    res.status(500).send({ error: "Failed to process face alert." });
+  }
+});
+
 
 /**
  * @api {get} /api/test Test API
