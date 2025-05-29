@@ -30,6 +30,7 @@
                         <a class="dropdown-item" href="/floor-plan"><i class="fa-light fa-house"></i> Floorplan</a>
                         <a class="dropdown-item" href="/stats"><i class="fa-solid fa-chart-simple"></i> Statistics</a>
                         <a class="dropdown-item" href="/intrusion-logs"><i class="fa-solid fa-user-secret"></i> Intrusion Logs</a>
+                        <a class="dropdown-item" href="/manage-known-faces"><i class="fas fa-users-cog"></i> Manage Faces</a> <!-- ADDED THIS LINE -->
                         <div class="dropdown-divider"></div>
                         
                         <a class="dropdown-item" target="_blank" href="http://localhost:5000/docs"><i class="fa-brands fa-dochub"></i> Docs</a>
@@ -82,6 +83,10 @@
     // Use user data
     
     logoutext.innerHTML = user[0].name;
+  })
+  .catch(err => {
+      console.warn('User not authenticated or error fetching user data for navbar name.');
+      // Keep "Logout" as default or handle as needed
   });
 });
 });

@@ -1,5 +1,4 @@
-
-
+// web/server.js
 const express = require('express');
 const app = express();
 const fs = require('fs');
@@ -21,8 +20,9 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increased limit for larger payloads like base64 images
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '10mb'}));
 
 var sslOptions = {
     key: fs.readFileSync('key.pem'),
@@ -108,6 +108,10 @@ app.get('/stats', ensureAuthenticated, (req, res) => {
 
 app.get('/intrusion-logs', ensureAuthenticated, (req, res) => { 
     res.sendFile(`${base}/intrusion-logs.html`);
+});
+
+app.get('/manage-known-faces', ensureAuthenticated, (req, res) => { // ADDED THIS ROUTE
+    res.sendFile(`${base}/manage-known-faces.html`);
 });
 
 app.get('/me',  (req, res) => {

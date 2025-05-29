@@ -15,37 +15,69 @@ const axios = require("axios");
 const KnownFace = require("./models/knownFace.js"); // ADD THIS
 const UnknownFaceLog = require("./models/unknownFaceLog.js");
 
+const Setting = require("./models/setting.js"); 
+
 const nodemailer = require("nodemailer");
 const appConfig = require("./config/keys");
 
 const mqttApi = "http://localhost:5000/";
 
 let transporter;
-if (appConfig.emailConfig && appConfig.emailConfig.auth.user) {
-    transporter = nodemailer.createTransport({
-        host: appConfig.emailConfig.host,
-        port: appConfig.emailConfig.port,
-        secure: appConfig.emailConfig.secure,
-        auth: {
-            user: appConfig.emailConfig.auth.user,
-            pass: appConfig.emailConfig.auth.pass,
-        },
-        tls: {
-            // do not fail on invalid certs (for local/dev SMTP servers)
-            rejectUnauthorized: false
-        }
-    });
-
-    transporter.verify(function (error, success) {
-        if (error) {
-            console.error("Nodemailer verification error:", error);
+let currentAlertRecipientEmail = appConfig.emailConfig.alertRecipient;
+async function initializeAlertRecipient() {
+    try {
+        let setting = await Setting.findOne({ key: 'alertRecipientEmail' });
+        if (setting && setting.value) {
+            currentAlertRecipientEmail = setting.value;
+            console.log(`Alert recipient email loaded from DB: ${currentAlertRecipientEmail}`);
         } else {
-            console.log("Nodemailer is ready to send emails.");
+            console.log(`Alert recipient email not found in DB, using default from config: ${appConfig.emailConfig.alertRecipient}`);
+            currentAlertRecipientEmail = appConfig.emailConfig.alertRecipient;
+            // Optionally save the default to DB if it's not there
+            if (currentAlertRecipientEmail && typeof currentAlertRecipientEmail === 'string' && currentAlertRecipientEmail.includes('@')) {
+                 await Setting.findOneAndUpdate(
+                    { key: 'alertRecipientEmail' },
+                    { value: currentAlertRecipientEmail },
+                    { upsert: true, new: true }
+                );
+                console.log('Saved default alert recipient to DB.');
+            } else {
+                console.warn('Default alert recipient from config is invalid or not set. Cannot save to DB.');
+            }
         }
-    });
-} else {
-    console.warn("Email configuration not found or incomplete. Email alerts will be disabled.");
+    } catch (err) {
+        console.error("Error initializing alert recipient from DB:", err);
+        // Fallback to config if DB fails
+        currentAlertRecipientEmail = appConfig.emailConfig.alertRecipient;
+    }
+
+    if (appConfig.emailConfig && appConfig.emailConfig.auth.user) {
+        transporter = nodemailer.createTransport({
+            host: appConfig.emailConfig.host,
+            port: appConfig.emailConfig.port,
+            secure: appConfig.emailConfig.secure,
+            auth: {
+                user: appConfig.emailConfig.auth.user,
+                pass: appConfig.emailConfig.auth.pass,
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        });
+
+        transporter.verify(function (error, success) {
+            if (error) {
+                console.error("Nodemailer verification error:", error);
+            } else {
+                console.log("Nodemailer is ready to send emails.");
+            }
+        });
+    } else {
+        console.warn("Email configuration not found or incomplete. Email alerts will be disabled.");
+    }
 }
+
+initializeAlertRecipient();
 
 // enable CORS for all routes
 app.use(cors());
@@ -60,24 +92,56 @@ app.use(function (req, res, next) {
   next();
 });
 
+app.get("/api/settings/alert-recipient", async (req, res) => {
+    try {
+        res.send({ email: currentAlertRecipientEmail });
+    } catch (err) {
+        console.error("Error fetching alert recipient setting:", err);
+        res.status(500).send({ error: "Failed to fetch alert recipient email." });
+    }
+});
+
+app.put("/api/settings/alert-recipient", async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || typeof email !== 'string' || !email.includes('@')) { // Basic validation
+            return res.status(400).send({ error: "Invalid email format provided." });
+        }
+        await Setting.findOneAndUpdate(
+            { key: 'alertRecipientEmail' },
+            { value: email },
+            { upsert: true, new: true, runValidators: true }
+        );
+        currentAlertRecipientEmail = email; // Update in-memory value
+        console.log(`Alert recipient email updated to: ${currentAlertRecipientEmail}`);
+        res.send({ message: "Alert recipient email updated successfully.", email: currentAlertRecipientEmail });
+    } catch (err) {
+        console.error("Error updating alert recipient setting:", err);
+        res.status(500).send({ error: "Failed to update alert recipient email." });
+    }
+});
+
 app.post("/api/known-faces", async (req, res) => {
   try {
-    const { name, descriptors } = req.body;
+    const { name, descriptors, faceImagePreview } = req.body; // Added faceImagePreview
     if (!name || !descriptors || descriptors.length === 0) {
       return res.status(400).send({ error: "Name and descriptors are required." });
     }
     if (!Array.isArray(descriptors) || !descriptors.every(d => Array.isArray(d) && d.every(n => typeof n === 'number'))) {
         return res.status(400).send({ error: "Invalid descriptors format."});
     }
+    if (faceImagePreview && typeof faceImagePreview !== 'string') { // Optional basic validation for preview
+        return res.status(400).send({ error: "Invalid faceImagePreview format."});
+    }
+
     const existingFace = await KnownFace.findOne({ name });
     if (existingFace) {
-      // Option: update descriptors or prevent duplicates
-      // For now, we'll update if found, or create if not.
       existingFace.descriptors = descriptors;
+      if (faceImagePreview) existingFace.faceImagePreview = faceImagePreview; // Update preview if provided
       await existingFace.save();
       res.send({ message: "Known face updated successfully.", knownFace: existingFace });
     } else {
-      const newKnownFace = new KnownFace({ name, descriptors });
+      const newKnownFace = new KnownFace({ name, descriptors, faceImagePreview }); // Save preview
       await newKnownFace.save();
       res.status(201).send({ message: "Known face added successfully.", knownFace: newKnownFace });
     }
@@ -116,11 +180,14 @@ app.get("/api/intrusion-logs", async (req, res) => {
 
 app.get("/api/known-faces", async (req, res) => {
   try {
-    const knownFaces = await KnownFace.find({}, 'name descriptors').lean();
-    // Structure for face-api.js LabeledFaceDescriptors on client: { label: string, descriptors: Float32Array[] }
+    // Fetch _id, name, descriptors, and faceImagePreview
+    const knownFaces = await KnownFace.find({}, '_id name descriptors faceImagePreview createdAt').lean(); 
     const clientReadyKnownFaces = knownFaces.map(face => ({
+        _id: face._id,
         label: face.name,
-        descriptors: face.descriptors.map(dArray => new Float32Array(dArray)) // Client will reconstruct Float32Array
+        descriptors: face.descriptors,
+        faceImagePreview: face.faceImagePreview, // Include the preview
+        createdAt: face.createdAt 
     }));
     res.send(clientReadyKnownFaces);
   } catch (err) {
@@ -129,43 +196,89 @@ app.get("/api/known-faces", async (req, res) => {
   }
 });
 
+app.delete("/api/known-faces/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({ error: "Invalid face ID format." });
+        }
+        const result = await KnownFace.findByIdAndDelete(id);
+        if (!result) {
+            return res.status(404).send({ error: "Known face not found." });
+        }
+        res.send({ message: "Known face removed successfully." });
+    } catch (err) {
+        console.error("Error in /api/known-faces DELETE:", err);
+        res.status(500).send({ error: "Failed to remove known face: " + err.message });
+    }
+});
 
 app.post("/api/face-alert", async (req, res) => {
   try {
-    const { faceImage, cameraName } = req.body;
+    const { faceImage, cameraName } = req.body; // faceImage is expected to be a base64 data URI string
     if (!faceImage) {
       return res.status(400).send({ error: "Face image is required." });
     }
-    const newLog = new UnknownFaceLog({ faceImage, cameraName });
+
+    // --- Start: Prepare image for CID embedding ---
+    let imageBuffer;
+    let contentType = 'image/jpeg'; // Default
+    let imageExtension = 'jpg';
+
+    if (faceImage.startsWith('data:image/')) {
+        const parts = faceImage.split(';base64,');
+        const mimeTypePart = parts[0].split(':')[1];
+        if (mimeTypePart) {
+            contentType = mimeTypePart;
+            imageExtension = mimeTypePart.split('/')[1] || 'jpg'; // e.g., 'jpeg' or 'png'
+        }
+        imageBuffer = Buffer.from(parts[1], 'base64');
+    } else {
+        // If it's not a data URI, this approach won't work directly.
+        // For simplicity, we assume it's always a data URI as per current setup.
+        // If it could be a file path or URL, more complex handling would be needed.
+        console.error("Face image is not in expected base64 data URI format.");
+        // Fallback to trying to send it as is, or handle error
+        imageBuffer = Buffer.from(faceImage, 'base64'); // Might fail or be incorrect
+    }
+
+    const cid = `unknownface_${Date.now()}@smartbuilding.com`; // Unique CID
+    // --- End: Prepare image for CID embedding ---
+
+    const newLog = new UnknownFaceLog({ 
+        faceImage, // Store the original base64 data URI in the DB
+        cameraName 
+    });
     await newLog.save();
     
     const alertMessage = `ALERT: Unknown face detected on camera [${cameraName || 'N/A'}]. Image logged with ID: ${newLog._id}. Check intrusion logs.`;
     console.log(alertMessage);
 
-    // Send Email Alert
-    if (transporter && appConfig.emailConfig.alertRecipient) {
+    if (transporter && currentAlertRecipientEmail && typeof currentAlertRecipientEmail === 'string' && currentAlertRecipientEmail.includes('@')) {
         const mailOptions = {
             from: `"Smart Building System" <${appConfig.emailConfig.auth.user}>`,
-            to: appConfig.emailConfig.alertRecipient,
+            to: currentAlertRecipientEmail,
             subject: 'Unknown Face Detected!',
-            html: `<p>${alertMessage}</p><p>Timestamp: ${newLog.timestamp.toLocaleString()}</p><img src="${faceImage}" alt="Unknown Face" style="max-width: 300px;"/>`,
-            // To embed image directly (cid approach):
-            // html: `<p>${alertMessage}</p><p>Timestamp: ${newLog.timestamp.toLocaleString()}</p><img src="cid:unknownface@smartbuilding.com"/>`,
-            // attachments: [{
-            //     filename: 'unknown_face.jpg',
-            //     path: faceImage, // if faceImage is a path to a file
-            //     cid: 'unknownface@smartbuilding.com' // should match cid in html
-            // }]
-            // Note: For base64 data URI, direct embedding in <img> src works for most email clients.
+            html: `<p>${alertMessage}</p><p>Timestamp: ${newLog.timestamp.toLocaleString()}</p><img src="cid:${cid}" alt="Unknown Face" style="max-width: 300px;"/>`, // Use CID here
+            attachments: [
+                {
+                    filename: `unknown_face_${newLog._id}.${imageExtension}`,
+                    content: imageBuffer, // Send as a Buffer
+                    cid: cid // Same CID as in html src
+                }
+            ]
         };
         try {
             let info = await transporter.sendMail(mailOptions);
-            console.log("Email alert sent: " + info.response);
+            console.log("Email alert sent to " + currentAlertRecipientEmail + ": " + info.response);
         } catch (emailError) {
             console.error("Error sending email alert:", emailError);
         }
     } else {
-        console.warn("Email transporter not configured or recipient missing. Skipping email alert.");
+        if (!transporter) console.warn("Email transporter not configured. Skipping email alert.");
+        if (!currentAlertRecipientEmail || typeof currentAlertRecipientEmail !== 'string' || !currentAlertRecipientEmail.includes('@') ) {
+            console.warn(`Alert recipient email not set or invalid ('${currentAlertRecipientEmail}'). Skipping email alert.`);
+        }
     }
 
     res.status(200).send({ message: "Unknown face alert received, logged, and email attempted.", logId: newLog._id, loggedEntry: newLog });
@@ -174,7 +287,6 @@ app.post("/api/face-alert", async (req, res) => {
     res.status(500).send({ error: "Failed to process face alert." });
   }
 });
-
 
 /**
  * @api {get} /api/test Test API
@@ -937,7 +1049,7 @@ app.post("/api/cameras", async (req, res) => {
     const { name, status, url, type } = req.body;
     const newCamera = new Camera({
       name,
-      status: status === "1",
+      status: status === "1" || status === true, 
       url,
       type,
     });
@@ -945,6 +1057,7 @@ app.post("/api/cameras", async (req, res) => {
     await newCamera.save();
     res.send({ message: "Camera added successfully.", id: newCamera._id });
   } catch (err) {
+    console.error("Error adding camera:", err); 
     res.status(500).send({ error: "Failed to add camera" });
   }
 });
@@ -959,12 +1072,22 @@ app.post("/api/cameras/toggle", async (req, res) => {
   }
 });
 
-app.delete("/api/cameras/delete", async (req, res) => {
+app.delete("/api/cameras/delete", async (req, res) => { // Ensure client calls DELETE
   try {
-    const { id } = req.body;
-    await Camera.findByIdAndDelete(id);
+    const { id } = req.body;  
+    if (!id) {
+        return res.status(400).send({ error: "Camera ID is required for deletion." });
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid Camera ID format."});
+    }
+    const result = await Camera.findByIdAndDelete(id);
+    if (!result) {
+        return res.status(404).send({ error: "Camera not found." });
+    }
     res.send({ message: "Camera deleted successfully." });
   } catch (err) {
+    console.error("Failed to delete camera:", err);
     res.status(500).send({ error: "Failed to delete camera" });
   }
 });
