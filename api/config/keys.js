@@ -10,6 +10,6 @@ module.exports = {
             user: 'ghoullrider@gmail.com', 
             pass: 'ibgx xpxf mimy dwzj'       
         },
-        alertRecipient:'amangusain2003@gmail.com'
+        alertRecipient:'liteshgrover76@gmail.com'
     }
 };
